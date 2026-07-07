@@ -8,6 +8,7 @@
     var state = {
         mode: "reinforce",
         domain: "domain1",
+        domains: ["domain1"],
         sessionQuestions: [],
         currentIndex: 0,
         selectedChoice: null,
@@ -231,7 +232,12 @@
 
         getDomainInputs().forEach(function (input) {
             input.addEventListener("change", function () {
-                state.domain = input.value;
+                var selectedDomains = getCheckedDomainValues();
+                if (!selectedDomains.length) {
+                    input.checked = true;
+                    selectedDomains = [input.value];
+                }
+                setSelectedDomains(selectedDomains);
                 updateLocationText();
                 saveState();
             });
@@ -246,12 +252,65 @@
         return Array.prototype.slice.call(document.querySelectorAll("input[name='domain']"));
     }
 
+    function getAllDomainIds() {
+        return Object.keys(CPACC_LAB_DATA.domains || {});
+    }
+
+    function getCheckedDomainValues() {
+        return getDomainInputs().filter(function (input) {
+            return input.checked;
+        }).map(function (input) {
+            return input.value;
+        });
+    }
+
+    function normalizeSelectedDomains(domains) {
+        var validDomains = getAllDomainIds();
+        var seen = {};
+        var normalized = [];
+
+        if (!Array.isArray(domains)) {
+            domains = domains ? [domains] : [];
+        }
+
+        domains.forEach(function (domainId) {
+            if (validDomains.indexOf(domainId) !== -1 && !seen[domainId]) {
+                seen[domainId] = true;
+                normalized.push(domainId);
+            }
+        });
+
+        if (!normalized.length) {
+            normalized.push("domain1");
+        }
+
+        return normalized;
+    }
+
+    function setSelectedDomains(domains) {
+        state.domains = normalizeSelectedDomains(domains);
+        state.domain = state.domains[0];
+    }
+
+    function getSelectedDomains() {
+        return normalizeSelectedDomains(state.domains && state.domains.length ? state.domains : state.domain);
+    }
+
+    function getDomainSelectionLabel() {
+        var domains = getSelectedDomains();
+        if (domains.length === 1) {
+            return getDomainTitle(domains[0]);
+        }
+        return String(domains.length) + " selected domains";
+    }
+
     function syncControlsFromState() {
         getModeInputs().forEach(function (input) {
             input.checked = input.value === state.mode;
         });
+        setSelectedDomains(state.domains && state.domains.length ? state.domains : state.domain);
         getDomainInputs().forEach(function (input) {
-            input.checked = input.value === state.domain;
+            input.checked = getSelectedDomains().indexOf(input.value) !== -1;
         });
     }
 
@@ -322,24 +381,25 @@
     }
 
     function updateLocationText() {
-        els.locationText.textContent = getDomainTitle(state.domain) + ". " + getModeLabel(state.mode) + ".";
+        els.locationText.textContent = getDomainSelectionLabel() + ". " + getModeLabel(state.mode) + ".";
     }
 
     function readSetupControls() {
         var checkedMode = document.querySelector("input[name='mode']:checked");
-        var checkedDomain = document.querySelector("input[name='domain']:checked");
+        var checkedDomains = getCheckedDomainValues();
         if (checkedMode) {
             state.mode = checkedMode.value;
         }
-        if (checkedDomain) {
-            state.domain = checkedDomain.value;
-        }
+        setSelectedDomains(checkedDomains.length ? checkedDomains : state.domains);
+        syncControlsFromState();
     }
 
     function getAvailableQuestions() {
         var difficulty = els.difficultyFilter ? els.difficultyFilter.value : "all";
+        var selectedDomains = getSelectedDomains();
+
         return CPACC_LAB_DATA.questions.filter(function (question) {
-            if (question.domain !== state.domain) {
+            if (selectedDomains.indexOf(question.domain) === -1) {
                 return false;
             }
             if (state.mode !== "sprint" && question.mode !== state.mode) {
@@ -457,21 +517,23 @@
         readSetupControls();
         updateLocationText();
         updateModeDependentControls();
-        domainInfo = CPACC_LAB_DATA.domains[state.domain];
-        if (domainInfo && domainInfo.comingSoon) {
-            els.feedback.textContent = getDomainTitle(state.domain) + " is coming soon. For this first build, please use Domain 1 - Disability Models and Disability Experience.";
+        var unavailableDomains = getSelectedDomains().filter(function (domainId) {
+            return CPACC_LAB_DATA.domains[domainId] && CPACC_LAB_DATA.domains[domainId].comingSoon;
+        });
+        if (unavailableDomains.length) {
+            els.feedback.textContent = getDomainSelectionLabel() + " includes a domain that is coming soon. Clear that domain and start again.";
             focusElement(els.feedback);
             return;
         }
 
         var questions = getAvailableQuestions();
         if (!questions.length && els.difficultyFilter.value !== "all") {
-            els.feedback.textContent = "No questions are available for " + getDomainTitle(state.domain) + " in " + getModeLabel(state.mode) + " with the selected difficulty. The Lab will use all difficulties for this session.";
+            els.feedback.textContent = "No questions are available for " + getDomainSelectionLabel() + " in " + getModeLabel(state.mode) + " with the selected difficulty. The Lab will use all difficulties for this session.";
             els.difficultyFilter.value = "all";
             questions = getAvailableQuestions();
         }
         if (!questions.length) {
-            els.feedback.textContent = "No questions are available for " + getDomainTitle(state.domain) + " in " + getModeLabel(state.mode) + ".";
+            els.feedback.textContent = "No questions are available for " + getDomainSelectionLabel() + " in " + getModeLabel(state.mode) + ".";
             focusElement(els.feedback);
             return;
         }
@@ -676,7 +738,7 @@
         }
 
         state.stats.totalAnswered += 1;
-        updateDomainStats(correct);
+        updateDomainStats(correct, question && question.domain ? question.domain : state.domain);
     }
 
     function disableChoiceButtons() {
@@ -686,11 +748,12 @@
         });
     }
 
-    function updateDomainStats(correct) {
-        var domainStats = state.stats.domains[state.domain];
+    function updateDomainStats(correct, domainId) {
+        domainId = domainId || state.domain;
+        var domainStats = state.stats.domains[domainId];
         if (!domainStats) {
-            state.stats.domains[state.domain] = { answered: 0, correct: 0, incorrect: 0 };
-            domainStats = state.stats.domains[state.domain];
+            state.stats.domains[domainId] = { answered: 0, correct: 0, incorrect: 0 };
+            domainStats = state.stats.domains[domainId];
         }
         domainStats.answered += 1;
         if (correct) {
@@ -926,7 +989,7 @@
         els.questionHeading.textContent = "Sprint Complete";
         els.questionText.textContent = "Sprint complete.";
         state.currentIndex = state.sessionQuestions.length;
-        els.locationText.textContent = getDomainTitle(state.domain) + ". Sprint mode.";
+        els.locationText.textContent = getDomainSelectionLabel() + ". Sprint mode.";
         els.counter.textContent = "Questions completed: " + String(answered) + ".";
         els.choices.innerHTML = "";
         state.lastResultsText = "Sprint complete. Questions answered: " + String(answered) + ". Correct answers: " + String(state.sessionCorrect) + ". Incorrect answers: " + String(state.sessionIncorrect) + ". Accuracy: " + String(accuracy) + " percent.";
@@ -1649,7 +1712,7 @@
         state.reviewingMissed = false;
         document.title = "Session Complete - CPACC - OpenDoorAccessibilityLab";
         els.questionHeading.textContent = state.mode === "sprint" ? "Sprint Complete" : "Session Complete";
-        els.locationText.textContent = getDomainTitle(state.domain) + ". " + getModeLabel(state.mode) + ".";
+        els.locationText.textContent = getDomainSelectionLabel() + ". " + getModeLabel(state.mode) + ".";
         els.questionText.textContent = "Session complete.";
         els.choices.innerHTML = "";
         els.feedback.textContent = state.lastResultsText || "Session complete.";
@@ -1865,7 +1928,7 @@
             }
             saved = JSON.parse(raw);
             state.mode = saved.mode || state.mode;
-            state.domain = saved.domain || state.domain;
+            setSelectedDomains(Array.isArray(saved.domains) ? saved.domains : (saved.domain || state.domain));
             state.sessionQuestions = Array.isArray(saved.sessionQuestions) ? saved.sessionQuestions : [];
             state.currentIndex = Number(saved.currentIndex) || 0;
             state.selectedChoice = saved.selectedChoice === null ? null : saved.selectedChoice;
