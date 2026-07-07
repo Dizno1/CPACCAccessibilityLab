@@ -1,0 +1,23 @@
+CPACC Accessibility Lab - Sprint and Randomizer Fix Notes
+
+Changes made:
+1. Fixed static answer distribution in cpacc-data.js.
+   - The correct answer was always stored as answer index 0.
+   - The bank now distributes correct answers evenly across choices 1 through 4.
+   - Final distribution: 117 correct answers at each answer position.
+
+2. Added session-level answer choice randomization in app.js.
+   - Each question's answer choices are shuffled when a session is created.
+   - The correct answer index is recalculated after shuffling.
+   - This prevents learners from memorizing answer position.
+
+3. Fixed Sprint mode for mobile and touch use.
+   - Sprint no longer depends only on number-key shortcuts.
+   - Sprint now renders visible/tappable answer buttons.
+   - Keyboard users can still answer with 1 through 4.
+   - Mobile users can tap answer buttons directly.
+
+Files changed:
+- app.js
+- cpacc-data.js
+- SPRINT-RANDOMIZER-FIX-NOTES.txt

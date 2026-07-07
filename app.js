@@ -352,6 +352,50 @@
         });
     }
 
+
+    function randomizeChoiceOrder(question) {
+        var correctChoice;
+        var choiceObjects;
+        var shuffledChoices;
+        var newAnswer = 0;
+        var cloned;
+
+        if (!question || !question.choices || typeof question.answer !== "number") {
+            return question;
+        }
+
+        correctChoice = question.choices[question.answer];
+        choiceObjects = question.choices.map(function (choice, index) {
+            return {
+                text: choice,
+                originalIndex: index
+            };
+        });
+
+        choiceObjects = shuffle(choiceObjects);
+        shuffledChoices = choiceObjects.map(function (item, index) {
+            if (item.originalIndex === question.answer) {
+                newAnswer = index;
+            }
+            return item.text;
+        });
+
+        cloned = {};
+        Object.keys(question).forEach(function (key) {
+            cloned[key] = question[key];
+        });
+        cloned.choices = shuffledChoices;
+        cloned.answer = newAnswer;
+        cloned.originalAnswer = question.answer;
+        cloned.originalChoices = question.choices.slice();
+
+        if (correctChoice !== cloned.choices[cloned.answer]) {
+            cloned.answer = cloned.choices.indexOf(correctChoice);
+        }
+
+        return cloned;
+    }
+
     function chooseSessionQuestions(questions, requestedLength) {
         var shuffled = dedupeQuestions(shuffle(questions.slice()));
         var targetLength = requestedLength === "all" ? shuffled.length : Number(requestedLength);
@@ -390,7 +434,7 @@
             state.recentQuestionIds = state.recentQuestionIds.slice(state.recentQuestionIds.length - maxRecent);
         }
 
-        return selected;
+        return selected.map(randomizeChoiceOrder);
     }
 
     function startSession() {
@@ -485,14 +529,19 @@
         setNextAvailable(false);
         if (state.mode === "sprint") {
             els.questionHeading.textContent = "Sprint Question";
-            els.questionText.textContent = buildSprintPrompt(question);
-            els.answersHeading.textContent = "Sprint Answer Keys";
-            els.choices.innerHTML = "";
+            els.questionText.textContent = getLearnerQuestionText(question);
+            els.answersHeading.textContent = "Sprint Answer Choices";
+            renderChoices(question);
             els.nextQuestionButton.hidden = true;
             els.skipButton.hidden = true;
+            els.advanceStatus.textContent = "Sprint question " + String(state.currentIndex + 1) + ". Choose an answer by activating one of the answer buttons, or press 1 through 4 on a keyboard.";
             announceSprintPrompt(question);
-            if (moveFocus !== false && state.currentIndex === 0) {
-                focusElement(els.questionHeading);
+            if (moveFocus !== false) {
+                if (state.currentIndex === 0) {
+                    focusElement(els.questionHeading);
+                } else {
+                    focusElement(els.questionText);
+                }
             }
         } else {
             els.nextQuestionButton.hidden = false;
@@ -546,6 +595,7 @@
             button.className = "choice-button";
             button.textContent = String(index + 1) + ". " + choice;
             button.setAttribute("data-index", String(index));
+            button.setAttribute("aria-label", "Answer " + String(index + 1) + ". " + choice);
             button.addEventListener("click", function () {
                 selectChoice(index, button);
             });
