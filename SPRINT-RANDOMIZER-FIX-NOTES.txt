@@ -1,4 +1,4 @@
-CPACC Accessibility Lab - Sprint and Randomizer Fix Notes
+CPACC Accessible Lab - Sprint and Randomizer Fix Notes
 
 Changes made:
 1. Fixed static answer distribution in cpacc-data.js.

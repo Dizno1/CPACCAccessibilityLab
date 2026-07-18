@@ -1,4 +1,4 @@
-# CPACCAccessibilityLab
+# CPACCAccessibleLab
 Hands-on accessibility testing and learning environment for CPACC concepts.
 
 ## Open Door Design visual standard applied

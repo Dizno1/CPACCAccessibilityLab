@@ -1,4 +1,4 @@
-CPACC Accessibility Lab rebuild note
+CPACC Accessible Lab rebuild note
 
 This version replaces the partial Lab question data with the completed course-derived question bank.
 
