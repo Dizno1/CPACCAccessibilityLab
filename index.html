@@ -79,13 +79,43 @@
                 <label><input type="radio" name="mode" value="challenge"> Challenge</label><label><input type="radio" name="mode" value="sprint"> Sprint</label>
             </fieldset>
 
-            <fieldset>
+            <fieldset class="domain-options">
                 <legend>Choose Domains</legend>
-                <label><input type="checkbox" name="domain" value="domain1" checked> Domain 1 - Disability Models and Disability Experience</label>
-                <label><input type="checkbox" name="domain" value="domain2"> Domain 2 - Disability Demographics and Diversity</label>
-                <label><input type="checkbox" name="domain" value="domain3"> Domain 3 - Accessibility and Universal Design</label>
-                <label><input type="checkbox" name="domain" value="domain4"> Domain 4 - Assistive Technology</label>
-                <label><input type="checkbox" name="domain" value="domain5"> Domain 5 - Laws, Standards and Organizational Impact</label>
+                <label class="domain-option">
+                    <input type="checkbox" name="domain" value="domain1" checked>
+                    <span class="domain-content">
+                        <span class="domain-name">Domain 1</span>
+                        <span class="domain-description">Disability Models and Disability Experience</span>
+                    </span>
+                </label>
+                <label class="domain-option">
+                    <input type="checkbox" name="domain" value="domain2">
+                    <span class="domain-content">
+                        <span class="domain-name">Domain 2</span>
+                        <span class="domain-description">Disability Demographics and Diversity</span>
+                    </span>
+                </label>
+                <label class="domain-option">
+                    <input type="checkbox" name="domain" value="domain3">
+                    <span class="domain-content">
+                        <span class="domain-name">Domain 3</span>
+                        <span class="domain-description">Accessibility and Universal Design</span>
+                    </span>
+                </label>
+                <label class="domain-option">
+                    <input type="checkbox" name="domain" value="domain4">
+                    <span class="domain-content">
+                        <span class="domain-name">Domain 4</span>
+                        <span class="domain-description">Assistive Technology</span>
+                    </span>
+                </label>
+                <label class="domain-option">
+                    <input type="checkbox" name="domain" value="domain5">
+                    <span class="domain-content">
+                        <span class="domain-name">Domain 5</span>
+                        <span class="domain-description">Laws, Standards and Organizational Impact</span>
+                    </span>
+                </label>
             </fieldset>
 
             <label for="practice-length">Number of questions</label>
