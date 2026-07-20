@@ -8,4 +8,4 @@ This project uses the Open Door Design AAA-oriented visual standard. The interfa
 ## Visual remediation
 
 The domain selector now follows the same readable card layout used by the WCAG Accessibility Lab. Each checkbox, domain number, and domain description is visually separated while remaining one accessible label and click target. The skip link now sizes to its text instead of wrapping into a narrow fixed-width control. Button styling and the light green Open Door Design background remain consistent with the shared visual standard.
-
+Deployment refresh: July 20, 2026.
