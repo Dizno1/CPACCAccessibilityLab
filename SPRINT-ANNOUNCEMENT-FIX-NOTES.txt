@@ -1,0 +1,60 @@
+CPACC Accessible Lab - Sprint Mode Announcement Fix Notes
+
+Applied the same Sprint mode accessibility fix made to the sibling WCAG Accessibility Lab,
+after confirming this app.js/index.html had the identical underlying code (same variable
+names, same structure - this Lab was the original architecture the WCAG Lab was built from).
+
+Problem: Sprint mode fired two separate, overlapping live-region announcements on every
+question, repeated the full "press 1 through 4" instructions every question instead of once,
+and used an assertive (interrupting) live region instead of a polite one - all working against
+the goal of a fast, non-repetitive experience for experienced screen reader users doing
+repeated Sprint sessions.
+
+Changes made, all in app.js and index.html:
+
+1. index.html: #sprint-announcer changed from role="alert" aria-live="assertive" to
+   role="status" aria-live="polite", matching every other status region in the app
+   (#feedback, #advance-status). Assertive interrupts current speech; polite does not.
+
+2. index.html: Removed the "Used for Sprint only. Unavailable for other modes." help text
+   and its aria-describedby association on the Sprint Time dropdown. The control's own
+   disabled state (already correctly toggled based on selected mode) already conveys this;
+   the separate text restated what the disabled state already communicates.
+
+3. app.js, buildSprintPrompt() and announceSprintPrompt(): now take an includeInstructions
+   flag. Instructions ("Sprint started. Press 1 through 4...") are prepended only when
+   state.currentIndex === 0 (the first question of the session) and never repeated after
+   that. Every question's spoken prompt now begins with "Question X." rather than
+   "Sprint question X. Choose an answer by activating one of the answer buttons, or press
+   1 through 4 on a keyboard."
+
+4. app.js, question-render block (sprint branch): removed the duplicate advanceStatus
+   announcement that previously fired the same "Sprint question X. Choose an answer..."
+   text on every question, in addition to the separate sprintAnnouncer announcement.
+   advanceStatus is now left empty in Sprint mode; sprintAnnouncer is the single
+   announcement channel per question. Heading text changed from generic "Sprint Question"
+   to "Question X." to match what's spoken.
+
+5. app.js, completeSprint(): previously set els.feedback to the results text AND
+   separately set els.advanceStatus to next-step guidance - two live regions firing on
+   the same event. Now combined into a single els.feedback update; advanceStatus is
+   cleared. Focus after completion now moves directly to the Review Missed Questions
+   button when it's visible (there were missed questions), rather than always moving to
+   els.feedback; the prior fallback (focus to els.feedback) is preserved when there is
+   nothing to review.
+
+What was NOT changed: focus still moves to els.questionText for every question after the
+first (unchanged), which can cause a screen reader to announce that element's content via
+the focus change in addition to the sprintAnnouncer live-region announcement of the same
+text - a pre-existing overlap this fix did not resolve, since removing or redirecting that
+focus target risks breaking Tab-order continuity into the answer-choice buttons, a larger
+structural change than this fix's scope. This existed before this fix and still exists
+after it.
+
+Verification performed: node --check on both app.js and cpacc-data.js; the
+announcement-building logic (buildSprintPrompt) was traced in isolation across a simulated
+3-question sequence and confirmed to produce instructions only on question 1; every
+aria-live region in index.html was re-checked and confirmed polite; cpacc-data.js (468
+questions) was confirmed untouched. This was not tested against a real JAWS, NVDA, or
+VoiceOver instance, since no screen reader is available in this environment - that remains
+manual verification with real assistive technology.

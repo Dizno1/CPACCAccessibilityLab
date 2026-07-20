@@ -137,14 +137,13 @@
                 <option value="hard">Hard</option><option value="mixed">Mixed</option>
             </select>
 <label for="sprint-length">Sprint Time</label>
-            <select id="sprint-length" aria-describedby="sprint-length-note">
+            <select id="sprint-length">
                 <option value="60">1 Minute</option>
                 <option value="180">3 Minutes</option>
                 <option value="300" selected>5 Minutes</option>
                 <option value="600">10 Minutes</option>
                 <option value="900">15 Minutes</option>
             </select>
-            <p id="sprint-length-note" class="meta">Used for Sprint only. Unavailable for other modes.</p>
 
             <p id="saved-challenges-summary" class="status">No saved challenges pending export.</p>
             <button type="button" id="start-button" accesskey="s">Start Lab Session</button>
@@ -163,7 +162,7 @@
 
             <p id="feedback" class="status" role="status" aria-live="polite"></p>
             <p id="advance-status" class="status" aria-live="polite"></p>
-            <p id="sprint-announcer" class="sr-only" role="alert" aria-live="assertive" aria-atomic="true"></p>
+            <p id="sprint-announcer" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></p>
 
             <button type="button" id="next-question-button" aria-disabled="true" accesskey="c">Continue unavailable until answer is selected</button>
             <button type="button" id="skip-button" accesskey="n">Skip Question</button>
